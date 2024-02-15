@@ -86,7 +86,6 @@ local type_func_map = {
 
 encode = function(val, stack)
     local t = type(val)
-    print(t)
     local f = type_func_map[t]
     if f then
         return f(val, stack)
