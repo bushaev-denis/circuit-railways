@@ -1,1 +1,1 @@
----@alias GlobalPlayer {circuits?: {train: number, station: string}[]}
+---@alias Circuit {train: number, station: string}
