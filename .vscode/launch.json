@@ -4,7 +4,8 @@
     {
       "type": "factoriomod",
       "request": "launch",
-      "name": "Factorio Mod Debug"
+      "name": "Factorio Mod Debug",
+      "preLaunchTask": "copy-devs"
     },
     {
       "type": "factoriomod",

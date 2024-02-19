@@ -1,0 +1,47 @@
+name: publish
+
+on: workflow_dispatch
+
+env:
+  BASE_FILE_NAME: circuit-railways
+
+jobs:
+  publish:
+    runs-on: "ubuntu-latest"
+
+    steps:
+      - uses: actions/checkout@master
+
+      - name: Install
+        run: |
+          sudo apt-get install -y zip
+
+      - name: Set version
+        run: echo "PACKAGE_VERSION=$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' info.json)" >> $GITHUB_ENV
+
+      - name: Pack
+        run: |
+          mkdir release
+          cd release
+          cp -r ../locale .
+          cp ../*.{txt,lua,json} .
+          rm utils.dev.lua inspect.lua
+          mv utils.prod.lua utils.lua
+          zip -r "../$BASE_FILE_NAME_$PACKAGE_VERSION.zip" ./*
+          cd ../
+
+      - name: Initialize Release
+        uses: actions/create-release@v1
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+
+      - name: Create Release    
+        uses: csexton/release-asset-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          file: ${{ env.BASE_FILE_NAME }}_${{ env.PACKAGE_VERSION }}.zip
+          release-url: ${{ steps.create_release.outputs.upload_url }}

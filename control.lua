@@ -3,18 +3,18 @@ require 'utils'
 ---@comment Build main UI
 ---@param event EventData.on_gui_opened
 local function build_gui(event)
-    logger.debug('build_gui', event)
     local player = game.get_player(event.player_index)
 
     if not player then
-        logger.debug('build_gui', 'cant get player')
+        logger.error('build_gui', 'cant get player')
         do return end
     end
 
     local relative = player.gui.relative
 
     if relative.ccr_main then
-        do return end
+        relative.ccr_main.destroy()
+        -- do return end
     end
 
     local frame = relative.add {
@@ -28,7 +28,7 @@ local function build_gui(event)
     frame.style.width = 350;
 
     frame.add { type = "frame", name = "header", style = "inner_frame", direction = "horizontal" }
-    frame.header.add { type = "label", name = "title", caption = "Circuit Trains", style = "frame_title" }
+    frame.header.add { type = "label", name = "title", caption = { "ccr.title" }, style = "frame_title" }
 
     frame.add { type = "frame", name = "content", direction = "vertical", style = "deep_frame_in_shallow_frame" }
     frame.content.style.vertically_stretchable = true
@@ -42,22 +42,18 @@ local function build_gui(event)
     controls.style.top_margin = 5
     controls.add { type = "drop-down", name = "ccr_station_selector" }
     controls.ccr_station_selector.style.horizontally_stretchable = true;
-    controls.add { type = "button", name = "ccr_add_station", caption = "+ Add station" }
+    controls.add { type = "button", name = "ccr_add_station", caption = { "ccr.add-station" } }
 end
 
 ---@param event EventData.on_gui_opened | EventData.on_gui_click | EventData.on_train_schedule_changed
 local function update_station_table(event)
-    logger.debug('update_station_table', event)
-
     if not event.player_index then
-        logger.warn('update_station_table', 'cant get player index')
         do return end
     end
 
     local player = game.get_player(event.player_index)
 
     if not player then
-        logger.warn('update_station_table', 'cant get player')
         do return end
     end
 
@@ -71,9 +67,10 @@ local function update_station_table(event)
     local table = player.gui.relative.ccr_main.content.table
     table.clear()
 
-    for index, circuit in pairs(global.circuits) do
+    for index = 1, #global.circuits do
+        local circuit = global.circuits[index]
         if circuit.train == train.id then
-            local item = table.add { type = "frame", name = "item_" .. index, style = "train_schedule_station_frame" }
+            local item = table.add { type = "frame", name = string.format("item_%d", index), style = "train_schedule_station_frame" }
             item.style.width = 318
 
             local label = item.add { type = "flow" }
@@ -81,26 +78,27 @@ local function update_station_table(event)
             label.style.left_padding = 10
             label.add { type = "label", caption = circuit.station }
 
-            item.add { type = "label", caption = get_station_count(player, circuit.station) }
+            item.add { type = "label", caption = circuit.station_count }
 
-            item.add { type = "button", name = "ccr_remove_station_" .. index, style = "train_schedule_delete_button", caption = "[color=white]x[/color]" }
+            item.add {
+                type = "button",
+                name = string.format("ccr_remove_station_%d", index),
+                style = "train_schedule_delete_button",
+                caption = "[color=white]x[/color]"
+            }
         end
     end
 end
 
 ---@param event EventData.on_gui_opened | EventData.on_train_schedule_changed
 local function update_station_selector(event)
-    logger.debug('update_station_selector', event)
-
     if not event.player_index then
-        logger.warn('update_station_table', 'cant get player index')
         do return end
     end
 
     local player = game.get_player(event.player_index)
 
     if not player then
-        logger.warn('build_gui', 'cant get player')
         do return end
     end
 
@@ -123,14 +121,13 @@ local function update_station_selector(event)
     end
 
     local selector = player.gui.relative.ccr_main.controls.ccr_station_selector
-
     selector.items = {}
 
-    for _, record in pairs(train.schedule.records) do
-        if not record.station or record.temporary then
-            break
+    for i = 1, #train.schedule.records do
+        local record = train.schedule.records[i]
+        if record.station and not record.temporary then
+            selector.add_item(record.station)
         end
-        selector.add_item(record.station)
     end
 
     if #selector.items > 0 then
@@ -158,17 +155,26 @@ local function handle_add_station(event)
     end
 
     local selector = event.element.parent.ccr_station_selector
+    ---@type string
+    ---@diagnostic disable-next-line: assign-type-mismatch
     local selected_station = selector.items[selector.selected_index]
 
     local already_added = false
-    for _, circuit in pairs(global.circuits) do
+    for i = 1, #global.circuits do
+        local circuit = global.circuits[i]
         if circuit.train == train.id and circuit.station == selected_station then
             already_added = true;
         end
     end
 
     if not already_added then
-        table.insert(global.circuits, { train = train.id, station = selected_station })
+        table.insert(global.circuits,
+            {
+                train = train.id,
+                station = selected_station,
+                station_count = #game.get_train_stops({ name = selected_station })
+            }
+        )
         update_station_table(event)
     end
 end
@@ -195,10 +201,11 @@ end
 ---@param event EventData.on_train_schedule_changed
 local function handle_schedule_changed(event)
     logger.debug('handle_schedule_changed', event)
-    for circuit_index, circuit in ipairs(global.circuits) do
+    for circuit_index = 1, #global.circuits do
+        local circuit = global.circuits[circuit_index]
         local station_present = false
-        for _, record in ipairs(event.train.schedule.records) do
-            if circuit.station == record.station then
+        for ri = 1, #event.train.schedule.records do
+            if circuit.station == event.train.schedule.records[ri].station then
                 station_present = true
                 break
             end
@@ -217,141 +224,109 @@ local function handle_train_changed_state(event)
     end
 
     local train = event.train
-    local schedule = train.schedule
-    local station = train.station
 
-    if not schedule then
-        logger.warn('handle_train_changed_state', 'cant get train schedule')
+    if not train.schedule then
+        logger.debug('handle_train_changed_state', 'cant get train schedule')
         do return end
     end
 
-    if #schedule.records <= 0 then
+    if #train.schedule.records <= 0 then
         logger.debug('empty train schedule', train)
-    end
-
-    if not station then
-        logger.warn('handle_train_changed_state', 'cant get train station')
         do return end
     end
 
-    local next_station_index = get_next_station_index_in_schedule(schedule)
-    local next_station = schedule.records[next_station_index]
+    if not train.station then
+        logger.debug('handle_train_changed_state', 'cant get train station')
+        do return end
+    end
 
-    if not next_station then
+    local next_station_index = get_next_station_index_in_schedule(train.schedule)
+
+    if next_station_index == nil then
         logger.debug(
             string.format(
                 'cant get next (target) station for train %d and current station %s',
                 train.id,
-                schedule.records[schedule.current].station
+                train.schedule.records[train.schedule.current].station
             )
         )
         do return end
     end
 
-    for _, circuit in ipairs(global.circuits) do
-        if circuit.station == station.backer_name then
-            logger.debug('skip real station in circuit schedule', station.backer_name)
+    for ci = 1, #global.circuits do
+        local circuit = global.circuits[ci]
+        if
+            circuit.station ==
+            train.station.backer_name
+        then
+            logger.debug('skip real station in circuit schedule', train.station.backer_name)
             train.go_to_station(next_station_index)
             do return end
         end
-    end
 
-    -- FIXME: remove it if not needed
-    -- local locomotive = nil;
 
-    -- for _, carriage in ipairs(train.carriages) do
-    --     if carriage.name == "locomotive" then
-    --         locomotive = carriage
-    --         break;
-    --     end
-    -- end
-
-    -- if not locomotive then
-    --     logger.warn('cant get train locomotive')
-    --     do return end
-    -- end
-
-    local all_stations = {}
-    for _, circuit in ipairs(global.circuits) do
-        if circuit.train ~= train.id then
-            goto continue
-        end
-
-        -- NOTE: dont do hard calculation before actually need it, do it on
-        if #all_stations <= 0 then
-            all_stations = game.surfaces.nauvis.find_entities_filtered({ name = 'train-stop' })
-        end
-
-        local all_circuit_station_entities = {}
-
-        for _, _station in ipairs(all_stations) do
-            if
-                next_station.station == circuit.station and
-                _station.backer_name == circuit.station
-            then
-                table.insert(all_circuit_station_entities, _station)
-            end
-        end
-
-        if #all_circuit_station_entities > 0 then
-            logger.debug(
-                string.format(
-                    'calculate circuit stations train: %d, station: %s',
-                    train.id,
-                    station.backer_name
+        if circuit.train == train.id then
+            if circuit.cache == nil then
+                circuit.cache = sort_station_coordinates_clockwise(
+                    game.get_train_stops({ name = circuit.station }),
+                    train.station.position
                 )
-            )
+            end
 
-            local sorted_stations = sort_station_coordinates_clockwise(all_circuit_station_entities,
-                train.station.position)
-            for _, _station in ipairs(sorted_stations) do
+            local schedule = train.schedule;
+
+            for si = 1, #circuit.cache do
                 ---@diagnostic disable-next-line: need-check-nil
                 table.insert(schedule.records,
                     train.schedule.current + 1,
                     {
-                        rail = _station.connected_rail,
+                        rail = circuit.cache[si].connected_rail,
                         temporary = true,
-                        wait_conditions = next_station.wait_conditions
+                        wait_conditions = train.schedule.records[next_station_index].wait_conditions
                     }
                 )
             end
+
             train.schedule = schedule
         end
+    end
+end
 
-        ::continue::
+---@param event EventData.on_train_schedule_changed
+local function remove_circut_cache(event)
+    for i = 1, #global.circuits do
+        if global.circuits[i].train == event.train.id then
+            global.circuits[i].cache = nil
+        end
     end
 end
 
 script.on_init(function()
     logger.debug('on_init')
-    global.circuits = {}
-end)
-
-script.on_event(defines.events.on_player_created, function(event)
-    logger.debug('on_player_created')
+    global = {
+        VERSION = { 1, 0, 0 },
+        circuits = {}
+    }
 end)
 
 script.on_event(defines.events.on_gui_opened, function(event)
-    logger.debug('on_gui_opened')
     build_gui(event)
     update_station_table(event)
     update_station_selector(event)
 end)
 
 script.on_event(defines.events.on_gui_click, function(event)
-    logger.debug('on_gui_click')
     handle_add_station(event)
     handle_delete_station(event)
 end)
 
 script.on_event(defines.events.on_train_schedule_changed, function(event)
-    logger.debug('on_train_schedule_changed')
     handle_schedule_changed(event)
     update_station_table(event)
     update_station_selector(event)
+    remove_circut_cache(event)
 end)
 
 script.on_event(defines.events.on_train_changed_state, function(event)
-    -- logger.debug('on_train_changed_state', event)
     handle_train_changed_state(event)
 end)

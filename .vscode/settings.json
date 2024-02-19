@@ -1,0 +1,6 @@
+{
+  "factorio.versions": [],
+  "Lua.workspace.library": [],
+  "Lua.workspace.userThirdParty": [],
+  "Lua.workspace.checkThirdParty": "ApplyInMemory"
+}
