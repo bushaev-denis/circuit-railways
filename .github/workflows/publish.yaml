@@ -17,7 +17,8 @@ jobs:
           sudo apt-get install -y zip
 
       - name: Set version
-        run: echo "PACKAGE_VERSION=$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' info.json)" >> $GITHUB_ENV
+        run: |
+          echo "PACKAGE_VERSION=$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' info.json)" >> $GITHUB_ENV
 
       - name: Pack
         run: |
@@ -39,7 +40,7 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: ${{ github.ref }}
 
-      - name: Create Release    
+      - name: Create Release
         uses: csexton/release-asset-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
