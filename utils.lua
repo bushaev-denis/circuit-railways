@@ -64,6 +64,7 @@ function get_train_by_id(player, id)
     return nil;
 end
 
+-- TODO: remplace with game.get_stops
 ---@param player LuaPlayer
 ---@param name string
 function get_stations(player, name)
@@ -116,4 +117,30 @@ function sort_station_coordinates_clockwise(points, center)
 
     table.sort(points, sorter)
     return points
+end
+
+---comment Returns the next station in schedule
+---@param schedule TrainSchedule
+---@param current_index int? change current index
+---@param include_temp boolean? include temporary (skipped by default)
+function get_next_station_index_in_schedule(schedule, current_index, include_temp)
+    current_index = current_index or schedule.current
+    include_temp = include_temp or false
+
+    while true do
+        if current_index + 1 > #schedule.records then
+            current_index = 1
+        else
+            current_index = current_index + 1
+        end
+
+        if current_index <= #schedule.records then
+            if not include_temp and not schedule.records[current_index].temporary then
+                return current_index
+            end
+            if include_temp and schedule.records[current_index].temporary then
+                return current_index
+            end
+        end
+    end
 end
