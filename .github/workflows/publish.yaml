@@ -24,7 +24,7 @@ jobs:
           cp -r ../locale .
           cp ../*.{txt,lua,json} .
           cp ../thumbnail.png .
-          rm utils.dev.lua inspect.lua
+          rm utils.dev.lua
           mv utils.prod.lua utils.lua
           cd ../
           zip -r "${PACKAGE_FILE}.zip" ./$PACKAGE_FILE
