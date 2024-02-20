@@ -2,9 +2,6 @@ name: publish
 
 on: workflow_dispatch
 
-env:
-  BASE_FILE_NAME: circuit-railways
-
 jobs:
   publish:
     runs-on: "ubuntu-latest"
@@ -18,19 +15,18 @@ jobs:
 
       - name: Set version
         run: |
-          echo "PACKAGE_VERSION=$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' info.json)" >> $GITHUB_ENV
+          echo "PACKAGE_FILE=circuit-railways_$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' info.json)" >> $GITHUB_ENV
 
       - name: Pack
         run: |
-          mkdir release
-          cd release
+          mkdir $PACKAGE_FILE
+          cd $PACKAGE_FILE
           cp -r ../locale .
           cp ../*.{txt,lua,json} .
           rm utils.dev.lua inspect.lua
           mv utils.prod.lua utils.lua
-          zip -r "../${BASE_FILE_NAME}_${PACKAGE_VERSION}.zip" ./*
           cd ../
-          ls -la
+          zip -r "${PACKAGE_FILE}.zip" ./$PACKAGE_FILE
 
       - name: Release
         uses: softprops/action-gh-release@v1
