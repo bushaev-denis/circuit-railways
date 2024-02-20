@@ -23,6 +23,7 @@ jobs:
           cd $PACKAGE_FILE
           cp -r ../locale .
           cp ../*.{txt,lua,json} .
+          cp ../thumbnail.png .
           rm utils.dev.lua inspect.lua
           mv utils.prod.lua utils.lua
           cd ../

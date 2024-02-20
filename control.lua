@@ -1,4 +1,5 @@
 require 'utils'
+require 'helpers'
 
 ---@comment Build main UI
 ---@param event EventData.on_gui_opened
