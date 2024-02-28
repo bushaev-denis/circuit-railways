@@ -45,14 +45,15 @@ CSRF=$(curl -b cookiejar.txt -c cookiejar.txt -s https://factorio.com/login?mods
 curl -b cookiejar.txt -c cookiejar.txt -s -e https://factorio.com/login?mods=1 -F "csrf_token=${CSRF}" -F "username_or_email=${FACTORIO_USER}" -F "password=${FACTORIO_PASSWORD}" -o /dev/null https://factorio.com/login
 
 # Query the mod info, verify the version number we're trying to push doesn't already exist
-curl -b cookiejar.txt -c cookiejar.txt -s "https://mods.factorio.com/api/mods/${NAME}/full" | jq -e ".releases[] | select(.version == \"${TAG}\")"
-# store the return code before running anything else
-STATUS_CODE=$?
+MOD_INFO_RESULT=$(curl -b cookiejar.txt -c cookiejar.txt -s "https://mods.factorio.com/api/mods/${NAME}/full")
+MOD_INFO_MESSAGE=$(jq -r '.message' <<< $MOD_INFO_RESULT)
+MOD_INFO_STATUS=$(jq -e ".releases[] | select(.version == \"${TAG}\")" <<< $MOD_INFO_RESULT)
 
-if [[ $STATUS_CODE -ne 4 ]]; then
+if [[ $MOD_INFO_MESSAGE != 'Mod not found' ]] && [[ $MOD_INFO_STATUS -ne 4 ]]; then
     echo "Release already exists, skipping"
     exit 0
 fi
+
 echo "Release doesn't exist for ${TAG}, uploading"
 
 # Load the upload form, getting an upload token
