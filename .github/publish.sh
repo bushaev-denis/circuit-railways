@@ -44,17 +44,17 @@ CSRF=$(curl -b cookiejar.txt -c cookiejar.txt -s https://factorio.com/login?mods
 # Authenticate with the credential secrets and the CSRF token, getting a session cookie for the authorized user
 curl -b cookiejar.txt -c cookiejar.txt -s -e https://factorio.com/login?mods=1 -F "csrf_token=${CSRF}" -F "username_or_email=${FACTORIO_USER}" -F "password=${FACTORIO_PASSWORD}" -o /dev/null https://factorio.com/login
 
-# Query the mod info, verify the version number we're trying to push doesn't already exist
-MOD_INFO_RESULT=$(curl -b cookiejar.txt -c cookiejar.txt -s "https://mods.factorio.com/api/mods/${NAME}/full")
-MOD_INFO_MESSAGE=$(jq -r '.message' <<< $MOD_INFO_RESULT)
-MOD_INFO_STATUS=$(jq -e ".releases[] | select(.version == \"${TAG}\")" <<< $MOD_INFO_RESULT)
+# # Query the mod info, verify the version number we're trying to push doesn't already exist
+# MOD_INFO_RESULT=$(curl -b cookiejar.txt -c cookiejar.txt -s "https://mods.factorio.com/api/mods/${NAME}/full")
+# MOD_INFO_MESSAGE=$(jq -r '.message' <<< $MOD_INFO_RESULT)
+# MOD_INFO_STATUS=$(jq -e ".releases[] | select(.version == \"${TAG}\")" <<< $MOD_INFO_RESULT)
 
-if [[ $MOD_INFO_MESSAGE != 'Mod not found' ]] && [[ $MOD_INFO_STATUS -ne 4 ]]; then
-    echo "Release already exists, skipping"
-    exit 0
-fi
+# if [[ $MOD_INFO_MESSAGE != 'Mod not found' ]] && [[ $MOD_INFO_STATUS -ne 4 ]]; then
+#     echo "Release already exists, skipping"
+#     exit 0
+# fi
 
-echo "Release doesn't exist for ${TAG}, uploading"
+# echo "Release doesn't exist for ${TAG}, uploading"
 
 # Load the upload form, getting an upload token
 UPLOAD_TOKEN=$(curl -b cookiejar.txt -c cookiejar.txt -s "https://mods.factorio.com/mod/${NAME}/downloads/edit" | grep token | sed -r -e "s/.*token: '(.*)'.*/\1/")
