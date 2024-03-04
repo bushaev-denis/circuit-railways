@@ -21,12 +21,17 @@ jobs:
         run: |
           echo "VERSION=$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' info.json)" >> $GITHUB_ENV
 
-      - name: Publish
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Create archive
         run: |
-          chmod +x ./.github/publish.sh
-          ./.github/publish.sh
-        shell: bash
+          mkdir "${NAME}_${TAG}"
+          cd "${NAME}_${TAG}"
+          cp -r ../locale .
+          cp ../*.{txt,lua,json} .
+          cp ../thumbnail.png .
+          rm utils.dev.lua
+          mv utils.prod.lua utils.lua
+          cd ../
+          zip -r "${NAME}_${TAG}.zip" "./${NAME}_${TAG}"
 
       - name: Github Release
         uses: softprops/action-gh-release@v1
