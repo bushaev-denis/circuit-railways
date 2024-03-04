@@ -26,6 +26,7 @@ jobs:
           mv utils.prod.lua utils.lua
           cd ../
           zip -r "${NAME}_${VERSION}.zip" "./${NAME}_${VERSION}"
+          ls
 
       - name: Github Release
         uses: softprops/action-gh-release@v1
