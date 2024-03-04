@@ -13,25 +13,19 @@ jobs:
     steps:
       - uses: actions/checkout@master
 
-      - name: Install
-        run: |
-          sudo apt-get install -y zip
-
-      - name: Set version
+      - name: Create archive
+        if: startsWith(github.ref, 'refs/tags/')
         run: |
           echo "VERSION=$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' info.json)" >> $GITHUB_ENV
-
-      - name: Create archive
-        run: |
-          mkdir "${NAME}_${TAG}"
-          cd "${NAME}_${TAG}"
+          mkdir "${NAME}_${VERSION}"
+          cd "${NAME}_${VERSION}"
           cp -r ../locale .
           cp ../*.{txt,lua,json} .
           cp ../thumbnail.png .
           rm utils.dev.lua
           mv utils.prod.lua utils.lua
           cd ../
-          zip -r "${NAME}_${TAG}.zip" "./${NAME}_${TAG}"
+          zip -r "${NAME}_${VERSION}.zip" "./${NAME}_${VERSION}"
 
       - name: Github Release
         uses: softprops/action-gh-release@v1
