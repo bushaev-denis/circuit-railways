@@ -58,7 +58,7 @@ local function update_station_table(event)
         do return end
     end
 
-    local train = player.opened and player.opened.train or nil;
+    local train = player.opened and player.opened_gui_type == defines.gui_type.trains and player.opened.train or nil
 
     if not train then
         logger.warn('update_station_table', 'cant get train')
