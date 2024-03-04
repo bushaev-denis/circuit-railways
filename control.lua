@@ -15,7 +15,6 @@ local function build_gui(event)
 
     if relative.ccr_main then
         relative.ccr_main.destroy()
-        -- do return end
     end
 
     local frame = relative.add {
@@ -58,7 +57,10 @@ local function update_station_table(event)
         do return end
     end
 
-    local train = player.opened and player.opened_gui_type == defines.gui_type.trains and player.opened.train or nil
+    local train = nil
+    if player.opened and player.opened_gui_type == defines.gui_type.entity and player.opened.train then
+        train = player.opened.train
+    end
 
     if not train then
         logger.warn('update_station_table', 'cant get train')
@@ -154,6 +156,8 @@ local function handle_add_station(event)
         logger.warn('handle_add_station: cant get train')
         do return end
     end
+
+    logger.debug('test')
 
     local selector = event.element.parent.ccr_station_selector
     ---@type string
