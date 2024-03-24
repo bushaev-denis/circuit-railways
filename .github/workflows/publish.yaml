@@ -1,6 +1,9 @@
 name: publish
 
-on: workflow_dispatch
+on:
+  push:
+    tags:
+      - "*"
 
 jobs:
   publish:
@@ -12,7 +15,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@master
-      
+
       - name: Set version
         run: |
           echo "VERSION=$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' info.json)" >> $GITHUB_ENV
