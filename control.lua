@@ -206,8 +206,14 @@ end
 ---@param event EventData.on_train_schedule_changed
 local function handle_schedule_changed(event)
     logger.debug('handle_schedule_changed', event)
+    if not event.train or not event.train.schedule then
+        do return end
+    end
     for circuit_index = 1, #global.circuits do
         local circuit = global.circuits[circuit_index]
+        if not circuit then
+            break
+        end
         local station_present = false
         for ri = 1, #event.train.schedule.records do
             if circuit.station == event.train.schedule.records[ri].station then
