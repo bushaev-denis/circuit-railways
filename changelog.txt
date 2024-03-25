@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.4
+Date: 2024-03-24
+  Changes:
+    - Fixed bug when shedule was created on wrong station.
+    - Improved algorithm - now the center is taken relative to all stations, and not relative to the current position of the train.
+    - Removed cache due to completely broken, I'll implement it on next release (maybe)
+---------------------------------------------------------------------------------------------------
 Version: 1.0.3
 Date: 2024-03-24
   Changes:

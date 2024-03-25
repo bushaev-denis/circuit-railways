@@ -9,9 +9,18 @@ function get_train_by_id(player, id)
 end
 
 ---@param points LuaEntity[]
----@param center {x: number, y: number}
-function sort_station_coordinates_clockwise(points, center)
-    logger.debug('sort_station_coordinates_clockwise')
+function sort_station_coordinates_clockwise(points)
+    local center = {x = 0, y = 0}
+
+    for _, point in pairs(points) do
+        logger.debug('point', {x = point.position.x, y = point.position.y})
+        center.x = center.x + point.position.x
+        center.y = center.y + point.position.y
+    end
+    center.x = center.x / #points
+    center.y = center.y / #points
+    logger.debug('center', center)
+
     local function sorter(_a, _b)
         local a = _a.position
         local b = _b.position
@@ -28,7 +37,7 @@ function sort_station_coordinates_clockwise(points, center)
             return b.y > a.y;
         end
 
-        det = (a.x - center.x) * (b.y - center.y) - (b.x - center.x) * (a.y - center.y);
+        local det = (a.x - center.x) * (b.y - center.y) - (b.x - center.x) * (a.y - center.y);
         if (det < 0) then
             return true
         end

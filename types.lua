@@ -1,1 +1,1 @@
----@alias Circuit {train: number, station: string, station_count: number, cache: nil | {number, number}[]}
+---@alias Circuit {train: number, station: string, station_count: number}[]}

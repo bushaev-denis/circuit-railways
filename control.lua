@@ -63,7 +63,7 @@ local function update_station_table(event)
     end
 
     if not train then
-        logger.warn('update_station_table', 'cant get train')
+        logger.info('update_station_table', 'cant get train')
         do return end
     end
 
@@ -114,12 +114,12 @@ local function update_station_selector(event)
     end
 
     if not train then
-        logger.warn('update_station_selector', 'cant get train')
+        logger.info('update_station_selector', 'cant get train')
         do return end
     end
 
     if not train.schedule then
-        logger.warn('update_station_selector', 'cant get schedule')
+        logger.info('update_station_selector', 'cant get schedule')
         do return end
     end
 
@@ -146,18 +146,16 @@ local function handle_add_station(event)
     local player = game.get_player(event.player_index)
 
     if not player then
-        logger.warn('handle_add_station: cant get player')
+        logger.info('handle_add_station: cant get player')
         do return end
     end
 
     local train = player.opened.train;
 
     if not train then
-        logger.warn('handle_add_station: cant get train')
+        logger.info('handle_add_station: cant get train')
         do return end
     end
-
-    logger.debug('test')
 
     local selector = event.element.parent.ccr_station_selector
     ---@type string
@@ -194,7 +192,7 @@ local function handle_delete_station(event)
     local station_index = tonumber(string.match(name, regex .. "(%d+)$"))
 
     if station_index == nil then
-        logger.warn("handle_delete_station', 'invalid station index")
+        logger.info("handle_delete_station', 'invalid station index")
         do return end
     end
 
@@ -264,34 +262,50 @@ local function handle_train_changed_state(event)
         do return end
     end
 
+    local next_station_in_circuit_schedule = false;
+
     for ci = 1, #global.circuits do
         local circuit = global.circuits[ci]
-        if
-            circuit.station ==
-            train.station.backer_name
-        then
-            logger.debug('skip real station in circuit schedule', train.station.backer_name)
-            train.go_to_station(next_station_index)
-            do return end
+
+        if train.schedule.records[next_station_index].station == circuit.station then
+            next_station_in_circuit_schedule = true
         end
+    end
 
 
-        if circuit.train == train.id then
-            if circuit.cache == nil then
-                circuit.cache = sort_station_coordinates_clockwise(
-                    game.get_train_stops({ name = circuit.station }),
-                    train.station.position
-                )
+    local target_stations = {}
+    if next_station_in_circuit_schedule then
+        for ci = 1, #global.circuits do
+            local circuit = global.circuits[ci]
+            if
+                circuit.station ==
+                train.station.backer_name
+            then
+                logger.debug('skip real station in circuit schedule', train.station.backer_name)
+                train.go_to_station(next_station_index)
+                do return end
             end
 
-            local schedule = train.schedule;
+            if circuit.train == train.id then
+                local all_stations_with_same_name = game.get_train_stops({ name = circuit.station })
+                for si = 1, #all_stations_with_same_name do
+                    table.insert(target_stations, all_stations_with_same_name[si])
+                end
+            end
+        end
 
-            for si = 1, #circuit.cache do
+        if #target_stations > 0 then
+            local sorted_stations = sort_station_coordinates_clockwise(target_stations)
+
+            local schedule = train.schedule
+
+            for ssi = 1, #sorted_stations do
+                local sorted_station = sorted_stations[ssi]
                 ---@diagnostic disable-next-line: need-check-nil
                 table.insert(schedule.records,
                     train.schedule.current + 1,
                     {
-                        rail = circuit.cache[si].connected_rail,
+                        rail = sorted_station.connected_rail,
                         temporary = true,
                         wait_conditions = train.schedule.records[next_station_index].wait_conditions
                     }
@@ -303,19 +317,9 @@ local function handle_train_changed_state(event)
     end
 end
 
----@param event EventData.on_train_schedule_changed
-local function remove_circut_cache(event)
-    for i = 1, #global.circuits do
-        if global.circuits[i].train == event.train.id then
-            global.circuits[i].cache = nil
-        end
-    end
-end
-
 script.on_init(function()
     logger.debug('on_init')
     global = {
-        VERSION = { 1, 0, 0 },
         circuits = {}
     }
 end)
@@ -335,7 +339,6 @@ script.on_event(defines.events.on_train_schedule_changed, function(event)
     handle_schedule_changed(event)
     update_station_table(event)
     update_station_selector(event)
-    remove_circut_cache(event)
 end)
 
 script.on_event(defines.events.on_train_changed_state, function(event)
