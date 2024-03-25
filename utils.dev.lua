@@ -1,8 +1,5 @@
 require('types')
-local inspect = require('libs.inspect')
-
----@type {circuits: Circuit[]}
-global = global or { circuits = {} }
+require('config')
 
 local function appendMetatable(data)
     if type(data) == 'table' then
@@ -19,7 +16,7 @@ end
 local function loggerFormatter(...)
     local args = table.pack(...)
     args.n = nil
-    return inspect(appendMetatable(args))
+    return serpent.block(appendMetatable(args))
 end
 
 ---@param color "gray"|"blue"|"yellow"|"red"

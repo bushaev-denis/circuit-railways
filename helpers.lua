@@ -1,19 +1,9 @@
----@param player LuaPlayer
----@param id uint
-function get_train_by_id(player, id)
-    for _, loco in pairs(player.surface.find_entities_filtered { name = "locomotive" }) do
-        if loco.train.id == id then return loco.train end;
-    end
-
-    return nil;
-end
-
 ---@param points LuaEntity[]
 function sort_station_coordinates_clockwise(points)
-    local center = {x = 0, y = 0}
+    local center = { x = 0, y = 0 }
 
     for _, point in pairs(points) do
-        logger.debug('point', {x = point.position.x, y = point.position.y})
+        logger.debug('point', { x = point.position.x, y = point.position.y })
         center.x = center.x + point.position.x
         center.y = center.y + point.position.y
     end
