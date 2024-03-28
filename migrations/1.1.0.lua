@@ -1,7 +1,7 @@
 require('types')
 require('utils')
 
-logger.debug('Apply migration 1.0.5')
+logger.debug('Apply migration 1.1.0')
 logger.debug('Before', global)
 
 ---@alias OldCircuit {train: number, station: string}

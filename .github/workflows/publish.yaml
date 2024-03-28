@@ -26,6 +26,7 @@ jobs:
           mkdir "${NAME}_${VERSION}"
           cd "${NAME}_${VERSION}"
           cp -r ../locale .
+          cp -r ../migrations .
           cp ../*.{txt,lua,json} .
           cp ../thumbnail.png .
           rm utils.dev.lua
