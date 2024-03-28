@@ -25,7 +25,3 @@ This mod adds the ability for a train to visit all stops with the same name.
 ### License
 
 Do what you want with this mod as long as it doesn't affect my interests.
-
-### Credits
-
-1. Sorting points clockwise: https://stackoverflow.com/a/77907056
