@@ -1,2 +1,2 @@
----@type {VERSION: number[], circuits: Circuit[]}
+---@type {circuits: Circuit[]}
 global = global or { circuits = {} }

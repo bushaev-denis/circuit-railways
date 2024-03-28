@@ -1,4 +1,12 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.1.0
+Date: 2024-03-28
+  Changes:
+    - Mod was full rewrited.
+    - Replaced old station finding algorithm to find all station clockwise with new which find stations by distance from current train position, it should be way better.
+    - Added caching, now mod calculates all stations only first time and then will be use from cache (deleting, resorting, changing wait condition for station will be reset cache)
+    - Minor improvements in code, mod should use less time for calculates things.
+---------------------------------------------------------------------------------------------------
 Version: 1.0.4
 Date: 2024-03-24
   Changes:

@@ -1,1 +1,1 @@
----@alias Circuit {train: number, station: string, station_count: number}[]}
+---@alias Circuit {train: number, stations: string[], cache: TrainSchedule | nil, ignore_schedule_changed: boolean}
